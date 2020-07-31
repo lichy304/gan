@@ -369,7 +369,7 @@ checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 for example_input, example_target in test_dataset.take(5):
     generate_images(generator, example_input, example_target)
 
-# %% [code]
+# saving pb file
 import tempfile
 
 MODEL_DIR = tempfile.gettempdir()
@@ -381,51 +381,9 @@ print('\nSaved model:')
 !ls - 1
 {export_path}
 
-# %% [code]
+#identifying pb file signatures
 !saved_model_cli
 show - -dir / tmp / 1 - -tag_set
 serve - -signature_def
 serving_default
 
-# %% [code]
-# imported = tf.saved_model.load(path주소)
-# sigature = imported.signatures["serving_default"]
-
-# %% [code]
-imported = tf.saved_model.load(export_path)
-
-
-# print(list(loaded.signatures.keys())) #["serving_defalut"]
-
-# %% [code]
-# infer = loaded.signatures["serving_default"]
-# print(infer.structured_outputs)
-
-# %% [code]
-class CustomModule(tf.Module):
-    def __init__(self):
-        super(CustomModule, self).__init__()
-        self.v = tf.Variable(1.)
-
-    @tf.function
-    def __call__(self, x):
-        return x * self.v
-
-    @tf.function(input_signature=[tf.TensorSpec([], tf.float32)])
-    def mutate(self, new_v):
-        self.v.assign(new_v)
-
-
-module = CustomModule()
-
-# %% [code]
-call = module.__call__.get_concrete_function(x=tf.TensorSpec([None], tf.float32))
-tf.saved_model.save(module, export_path, signatures=call)
-
-# %% [code]
-!saved_model_cli
-show - -dir / tmp / 1 - -tag_set
-serve - -signature_def
-serving_default
-
-# %% [code]
